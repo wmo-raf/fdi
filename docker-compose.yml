@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  fdi:
+    image: africahazardswatch/fdi:latest
+    container_name: fdi
+    build: .
+    restart: "no"
+    command: watch "date >> /var/log/date.log"
+    volumes:
+      - ./public:/data

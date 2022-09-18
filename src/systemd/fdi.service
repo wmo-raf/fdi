@@ -1,0 +1,13 @@
+[Unit]
+Description=Forecast Data Ingestion
+
+[Service]
+Group=outreach
+UMask=0002
+WorkingDirectory=/export/data/fdi
+Environment=UV_THREADPOOL_SIZE=16
+ExecStart=/usr/bin/npm run fdi
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
