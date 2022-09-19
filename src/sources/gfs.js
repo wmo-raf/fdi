@@ -1,6 +1,6 @@
 import { Datetime } from "../datetime.js";
 import { destructive_cat, download } from "../download.js";
-import { grib2, grib2_acc } from "../file-conversions.js";
+import { grib2, gfs_combine_grib } from "../file-conversions.js";
 import { typical_metadata, output_path, run_all } from "../utility.js";
 import { readFile, rm } from "fs/promises";
 
@@ -75,10 +75,15 @@ export async function convert_simple(url, datasets, dt, compression_level) {
 
   await run_all(
     datasets.map((dataset) => async () => {
-      let output = output_path(dataset.output_dir, dt.to_iso_string());
+      let output = output_path(
+        dataset.output_dir,
+        dt.to_iso_string(),
+        dataset.filename
+      );
       await (dataset.convert ?? grib2)(input, output, {
         compression_level,
         ...dataset.grib2_options,
+        asGeoTiff: true,
       });
     })
   );
@@ -86,29 +91,38 @@ export async function convert_simple(url, datasets, dt, compression_level) {
 }
 
 async function convert_accum(urls, datasets, dt, offset, compression_level) {
-  let input =
-    offset === 1
-      ? await download_gfs(urls[0], datasets)
-      : await destructive_cat(
-          await Promise.all(
-            urls.map((url) => {
-              return download_gfs(url, datasets);
-            })
-          )
+  if (!!datasets.length) {
+    let input =
+      offset === 1
+        ? await download_gfs(urls[0], datasets)
+        : await gfs_combine_grib(
+            await Promise.all(
+              urls.map((url) => {
+                return download_gfs(url, datasets);
+              })
+            )
+          );
+
+    await Promise.all(
+      datasets.map(async (dataset) => {
+        let simple = offset % dataset.accumulation.reset === 1;
+
+        let output = output_path(
+          dataset.output_dir,
+          dt.to_iso_string(),
+          dataset.filename
         );
 
-  await Promise.all(
-    datasets.map(async (dataset) => {
-      let simple = offset % dataset.accumulation.reset === 1;
+        await grib2(input, output, {
+          limit: simple ? 1 : 2,
+          ...dataset.grib2_options,
+          asGeoTiff: true,
+        });
+      })
+    );
 
-      let output = output_path(dataset.output_dir, dt.to_iso_string());
-      await (simple ? grib2 : grib2_acc)(input, output, {
-        limit: simple ? 1 : 2,
-        ...dataset.grib2_options,
-      });
-    })
-  );
-  await rm(input);
+    await rm(input);
+  }
 }
 
 async function download_gfs(url, datasets) {

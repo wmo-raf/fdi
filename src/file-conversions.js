@@ -2,18 +2,13 @@ import { brotli, temp_cache_dir, write_file_atomically } from "./utility.js";
 import { Float16Array } from "@petamoriken/float16";
 import { Buffer } from "buffer";
 import { spawn } from "child_process";
-import { readFile, rm } from "fs/promises";
+import { readFile, rm, rename } from "fs/promises";
 import { platform } from "os";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
 
 export async function grib1(input, output, options = {}) {
-  return await grib1_to_file(
-    input,
-    output,
-    options.record_number,
-    options.clip_by
-  );
+  return await grib1_to_file(input, output, options);
 }
 
 export async function grib1_normal(count, input, output, options = {}) {
@@ -52,12 +47,8 @@ export async function grib2(input, output, options = { match: ".*" }) {
   // await write_array_to_file(output, array, options.compression_level);
 }
 
-export async function grib2_speed(input, output, options = {}) {
-  await gfs_combine_grib(input, output, options, Math.hypot);
-}
-
-export async function grib2_acc(input, output, options = {}) {
-  await gfs_combine_grib(input, output, options, (a, b) => a - b);
+export async function grib2_acc(input, options = {}) {
+  await gfs_combine_grib(input, options, (a, b) => a - b);
 }
 
 export async function netcdf(input, output, options = {}) {
@@ -78,7 +69,23 @@ export async function netcdf_speed(input, output, options = {}) {
   await write_array_to_file(output, array, options.compression_level);
 }
 
-async function gfs_combine_grib(input, output, options, combine_fn) {
+export async function gfs_combine_grib(files, options = {}) {
+  let out_file = join(temp_cache_dir, uuidv4());
+
+  const cdo_sub_args = ["sub", files[0], files[1], out_file];
+
+  await spawn_cmd("cdo", cdo_sub_args);
+
+  if (options.factor) {
+    let out = await cdo_multc(out_file, options.factor);
+    await rm(out_file);
+    out_file = out;
+  }
+
+  return out_file;
+}
+
+async function gfs_combine_grib_(input, output, options, combine_fn) {
   let arr = await grib2_to_arr(input, options.match, options.limit);
 
   let array = Array.from({ length: arr.length / 2 }, (_, i) => {
@@ -92,89 +99,132 @@ async function gfs_combine_grib(input, output, options, combine_fn) {
   await write_array_to_file(output, array, options.compression_level);
 }
 
+async function clip_grib(input, geom) {
+  let out_file = join(temp_cache_dir, uuidv4());
+  const gdalwarp_args = [
+    "-q",
+    "-cutline",
+    geom,
+    "-crop_to_cutline",
+    "-of",
+    "GRIB",
+    "-dstnodata",
+    -9999,
+    "-overwrite",
+    "-t_srs",
+    "EPSG:4326",
+    input,
+    out_file,
+  ];
+
+  await spawn_cmd("gdalwarp", gdalwarp_args);
+
+  return out_file;
+}
+
+async function cdo_multc(input, constant) {
+  let out_file = join(temp_cache_dir, uuidv4());
+
+  const cdo_multc_args = [`-mulc,${constant}`, input, out_file];
+  await spawn_cmd("cdo", cdo_multc_args);
+
+  return out_file;
+}
+
+async function grib_to_tiff(input) {
+  let out_file = join(temp_cache_dir, uuidv4()) + ".tif";
+
+  const gdalwarp_translate_args = [
+    "-co",
+    "COMPRESS=DEFLATE",
+    "-co",
+    "predictor=3",
+    input,
+    out_file,
+  ];
+
+  await spawn_cmd("gdal_translate", gdalwarp_translate_args);
+
+  return out_file;
+}
+
 async function grib2_to_file(input, output, options) {
+  let out_temp_file = join(temp_cache_dir, uuidv4());
+
+  await spawn_cmd("wgrib2", [
+    input,
+    "-match",
+    options.match,
+    "-limit",
+    options.limit,
+    "-grib",
+    out_temp_file,
+  ]);
+
   if (options.clip_by) {
-    let temp_file = join(temp_cache_dir, uuidv4());
+    console.log("Clipping");
+    const out = await clip_grib(out_temp_file, output.options.clip_by);
+    await rm(out_temp_file); // clean up
+    out_temp_file = out;
+  }
 
-    // create grib file for variable
-    await spawn_cmd("wgrib2", [
-      input,
-      "-match",
-      options.match,
-      "-limit",
-      options.limit,
-      "-grib",
-      temp_file,
-    ]);
+  if (options.factor) {
+    console.log("Multiply by factor");
+    const out = await cdo_multc(out_temp_file, options.factor);
+    await rm(out_temp_file); // clean up
+    out_temp_file = out;
+  }
 
-    // clip to Africa
-    const gdalwarp_args = [
-      "-q",
-      "-cutline",
-      options.clip_by,
-      "-crop_to_cutline",
-      "-of",
-      "GRIB",
-      "-dstnodata",
-      -9999,
-      "-overwrite",
-      "-t_srs",
-      "EPSG:4326",
-      temp_file,
-      output,
-    ];
+  if (options.asGeoTiff) {
+    console.log("To Geotiff");
+    const out = await grib_to_tiff(out_temp_file);
+    await rm(out_temp_file);
+    out_temp_file = out;
+  }
 
-    await spawn_cmd("gdalwarp", gdalwarp_args);
-
-    return await rm(temp_file);
+  if (options.asGeoTiff) {
+    console.log("Saving geotiff");
+    return await rename(out_temp_file, output + ".geotiff");
   } else {
-    // create grib file for variable
-    return await spawn_cmd("wgrib2", [
-      input,
-      "-match",
-      options.match,
-      "-limit",
-      options.limit,
-      "-grib",
-      output,
-    ]);
+    console.log("Saving grib");
+    return await rename(out_temp_file, output + ".grib");
   }
 }
 
-async function grib1_to_file(input, output, record_number = 1, clip_by = "") {
+async function grib1_to_file(input, output, options = {}) {
+  let out_temp_file = join(temp_cache_dir, uuidv4());
+
+  const { record_number, clip_by, asGeoTiff, factor } = options;
+
+  // create grib file for variable
+  const wgrib_cmd = `wgrib ${input} | head -n ${
+    record_number || 1
+  } | wgrib -i ${input} -grib -o ${out_temp_file}`;
+  const args = ["-c", wgrib_cmd];
+  await spawn_cmd("sh", args);
+
   if (clip_by) {
-    let temp_file = join(temp_cache_dir, uuidv4());
+    const out = await clip_grib(out_temp_file, clip_by);
+    await rm(out_temp_file); // clean up
+    out_temp_file = out;
+  }
 
-    // create grib file for variable
-    const wgrib_cmd = `wgrib ${input} | head -n ${record_number} | wgrib -i ${input} -grib -o ${temp_file}`;
-    const args = ["-c", wgrib_cmd];
-    await spawn_cmd("sh", args);
+  if (factor) {
+    const out = await cdo_multc(out_temp_file, factor);
+    await rm(out_temp_file); // clean up
+    out_temp_file = out;
+  }
 
-    // clip to Africa
-    const gdalwarp_args = [
-      "-q",
-      "-cutline",
-      clip_by,
-      "-crop_to_cutline",
-      "-of",
-      "GRIB",
-      "-dstnodata",
-      -9999,
-      "-overwrite",
-      "-t_srs",
-      "EPSG:4326",
-      temp_file,
-      output,
-    ];
+  if (asGeoTiff) {
+    const out = await grib_to_tiff(out_temp_file);
+    await rm(out_temp_file);
+    out_temp_file = out;
+  }
 
-    await spawn_cmd("gdalwarp", gdalwarp_args);
-
-    return await rm(temp_file);
+  if (asGeoTiff) {
+    return await rename(out_temp_file, output + ".geotiff");
   } else {
-    // create grib file for variable
-    const wgrib_cmd = `wgrib ${input} | head -n ${record_number} | wgrib -i ${input} -grib -o ${output}`;
-    const args = ["-c", wgrib_cmd];
-    return await spawn_cmd("sh", args);
+    return await rename(out_temp_file, output + ".grib");
   }
 }
 
