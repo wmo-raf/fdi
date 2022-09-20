@@ -35,7 +35,7 @@ RUN addgroup $USER && useradd -ms /bin/bash $USER -g $USER
 
 RUN mkdir -p /app
 COPY package.json /app/package.json
-COPY package-lock.json /all/package-lock.json
+COPY package-lock.json /app/package-lock.json
 RUN cd /app && npm i
 
 WORKDIR /app
