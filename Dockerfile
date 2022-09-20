@@ -5,8 +5,11 @@ USER root
 RUN apk add --no-cache bash nodejs yarn --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community \
     wget gcc musl-dev gfortran make
 
-COPY ./build.sh /
-RUN /build.sh
+# COPY ./build.sh /
+# RUN /build.sh
+
+COPY ./build_cdo.sh /
+RUN /build_cdo.sh
 
 ENV NAME fdi
 

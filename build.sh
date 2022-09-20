@@ -1,13 +1,13 @@
 set -xeu
 
-# mkdir -p /usr/local/wgrib/
-# wget https://ftp.cpc.ncep.noaa.gov/wd51we/wgrib/wgrib.tar
-# mv wgrib.tar /usr/local/wgrib
-# cd /usr/local/wgrib
-# tar xvf wgrib.tar
-# make
-# rm wgrib.tar
-# ln -s /usr/local/wgrib/wgrib /usr/local/bin
+mkdir -p /usr/local/wgrib/
+wget https://ftp.cpc.ncep.noaa.gov/wd51we/wgrib/wgrib.tar
+mv wgrib.tar /usr/local/wgrib
+cd /usr/local/wgrib
+tar xvf wgrib.tar
+make
+rm wgrib.tar
+ln -s /usr/local/wgrib/wgrib /usr/local/bin
 
 mkdir -p /usr/local/grib2/
 wget https://ftp.cpc.ncep.noaa.gov/wd51we/wgrib2/wgrib2.tgz
