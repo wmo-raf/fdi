@@ -29,19 +29,15 @@ ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 # https://askubuntu.com/questions/504546/error-message-source-not-found-when-running-a-script
 RUN strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
 
-ENV USER app
+ENV USER node
 
 RUN addgroup $USER && useradd -ms /bin/bash $USER -g $USER
+WORKDIR /home/node/app
 
-RUN mkdir -p /app
-COPY package.json /app/package.json
-COPY package-lock.json /app/package-lock.json
+COPY package.json /home/node/package.json
+COPY package-lock.json /home/node/package-lock.json
+RUN npm install
 
-RUN npm config set unsafe-perm true
-RUN cd /app && npm install --force
-
-WORKDIR /app
-
-COPY --chown=$USER:$USER . /app/
+COPY --chown=$USER:$USER . /home/node/app/
 
 USER $USER
