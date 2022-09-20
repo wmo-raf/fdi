@@ -136,9 +136,9 @@ async function grib_to_tiff(input) {
 
   const gdalwarp_translate_args = [
     "-co",
-    "COMPRESS=DEFLATE",
+    "COMPRESS=LERC_DEFLATE",
     "-co",
-    "predictor=3",
+    "MAX_Z_ERROR=0.01",
     input,
     out_file,
   ];
