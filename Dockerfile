@@ -25,13 +25,15 @@ RUN curl --silent -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/insta
 ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
-ENV NAME fdi
+# Fix cdo error
+# https://askubuntu.com/questions/504546/error-message-source-not-found-when-running-a-script
+RUN strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
 
-RUN mkdir -p /opt/$NAME
-COPY package.json /opt/$NAME/package.json
-COPY package-lock.json /opt/$NAME/package-lock.json
-RUN cd /opt/$NAME && npm i
+RUN mkdir -p /opt/fdi
+COPY package.json /opt/fdi/package.json
+COPY package-lock.json /opt/fdi/package-lock.json
+RUN cd /opt/fdi && npm i
 
-WORKDIR /opt/$NAME
+WORKDIR /opt/fdi
 
-COPY . /opt/$NAME
+COPY . /opt/fdi
