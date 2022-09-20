@@ -8,4 +8,4 @@ services:
     restart: "no"
     command: watch "date >> /var/log/date.log"
     volumes:
-      - ./public:/data
+      - ${DATA_VOLUME}:/data

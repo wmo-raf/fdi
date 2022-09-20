@@ -1,4 +1,4 @@
-FROM osgeo/gdal:alpine-small-latest-arm64
+FROM osgeo/gdal:${GDAL_IMAGE_TAG}
 
 USER root
 
