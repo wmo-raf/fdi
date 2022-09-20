@@ -8,5 +8,5 @@ services:
     restart: ${RESTART_POLICY}
     command: npm start
     volumes:
-      - ${DATA_VOLUME}:/opt/fdi/public
-      - ./state:/opt/fdi/src/state
+      - ${DATA_VOLUME}:/fdi/public
+      - ./state:/fdi/src/state
