@@ -7,7 +7,6 @@ import {
   open,
   readdir,
   readFile,
-  rename,
   rmdir,
   stat,
   writeFile,
@@ -19,6 +18,10 @@ import { fileURLToPath } from "url";
 import { promisify } from "util";
 import { brotliCompress as _brotliCompress, constants } from "zlib";
 import "dotenv/config";
+import util from "util";
+import mv from "mv";
+
+const rename = util.promisify(mv);
 
 const brotliCompress = promisify(_brotliCompress);
 

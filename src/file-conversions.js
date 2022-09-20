@@ -2,10 +2,14 @@ import { brotli, temp_cache_dir, write_file_atomically } from "./utility.js";
 import { Float16Array } from "@petamoriken/float16";
 import { Buffer } from "buffer";
 import { spawn } from "child_process";
-import { readFile, rm, rename } from "fs/promises";
+import { readFile, rm } from "fs/promises";
 import { platform } from "os";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
+import util from "util";
+import mv from "mv";
+
+const rename = util.promisify(mv);
 
 export async function grib1(input, output, options = {}) {
   return await grib1_to_file(input, output, options);
