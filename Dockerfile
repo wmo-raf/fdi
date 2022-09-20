@@ -41,3 +41,5 @@ RUN cd /fdi && npm i
 WORKDIR /fdi
 
 COPY  --chown=app:app . /fdi
+
+USER $USER
