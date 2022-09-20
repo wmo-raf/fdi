@@ -7,8 +7,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y wget g++ make cdo \
     && rm -rf /var/lib/apt/lists/*
 
-# COPY ./build_wgrib.sh /
-# RUN /build_wgrib.sh
+COPY ./build_wgrib.sh /
+RUN /build_wgrib.sh
 
 ENV NVM_DIR /usr/local/nvm
 ENV NODE_VERSION 16.17.0
