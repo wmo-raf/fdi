@@ -36,13 +36,12 @@ RUN addgroup $USER && useradd -ms /bin/bash $USER -g $USER
 RUN mkdir -p /app
 COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
-RUN cd /app && npm i
+
+RUN npm config set unsafe-perm true
+RUN cd /app && npm install --force
 
 WORKDIR /app
 
 COPY --chown=$USER:$USER . /app
-
-RUN chown -R $USER:$USER /app
-RUN chmod 755 /app
 
 USER $USER
