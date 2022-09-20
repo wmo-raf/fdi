@@ -33,15 +33,16 @@ ENV USER app
 
 RUN addgroup $USER && useradd -ms /bin/bash $USER -g $USER
 
-RUN mkdir -p /fdi
-COPY package.json /fdi/package.json
-COPY package-lock.json /fdi/package-lock.json
-RUN cd /fdi && npm i
+RUN mkdir -p /app
+COPY package.json /app/package.json
+COPY package-lock.json /all/package-lock.json
+RUN cd /app && npm i
 
-WORKDIR /fdi
+WORKDIR /app
 
-COPY --chown=$USER:$USER . /fdi
+COPY --chown=$USER:$USER . /app
 
-RUN chmod -R 777 /fdi
+RUN chown -R $USER:$USER /app
+RUN chmod 755 /app
 
 USER $USER
