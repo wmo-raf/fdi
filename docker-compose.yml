@@ -5,7 +5,7 @@ services:
     image: africahazardswatch/fdi:latest
     container_name: fdi
     build: .
-    restart: "no"
-    command: tail -f /dev/null
+    restart: ${RESTART_POLICY}
+    command: npm start
     volumes:
       - ${DATA_VOLUME}:/data

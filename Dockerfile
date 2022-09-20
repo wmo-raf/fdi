@@ -34,4 +34,4 @@ RUN cd /opt/$NAME && npm i
 
 WORKDIR /opt/$NAME
 
-COPY . /opt/$NAME/app
+COPY . /opt/$NAME
