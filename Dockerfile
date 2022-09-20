@@ -42,6 +42,6 @@ RUN cd /app && npm install --force
 
 WORKDIR /app
 
-COPY --chown=$USER:$USER . /app
+COPY --chown=$USER:$USER . /app/
 
 USER $USER
