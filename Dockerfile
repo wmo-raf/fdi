@@ -40,6 +40,8 @@ RUN cd /fdi && npm i
 
 WORKDIR /fdi
 
-COPY  --chown=$USER:$USER . /fdi
+COPY --chown=$USER:$USER . /fdi
+
+RUN chmod -R 777 /fdi
 
 USER $USER
