@@ -166,31 +166,26 @@ async function grib2_to_file(input, output, options) {
   ]);
 
   if (options.clip_by) {
-    console.log("Clipping");
     const out = await clip_grib(out_temp_file, output.options.clip_by);
     await rm(out_temp_file); // clean up
     out_temp_file = out;
   }
 
   if (options.factor) {
-    console.log("Multiply by factor");
     const out = await cdo_multc(out_temp_file, options.factor);
     await rm(out_temp_file); // clean up
     out_temp_file = out;
   }
 
   if (options.asGeoTiff) {
-    console.log("To Geotiff");
     const out = await grib_to_tiff(out_temp_file);
     await rm(out_temp_file);
     out_temp_file = out;
   }
 
   if (options.asGeoTiff) {
-    console.log("Saving geotiff");
     return await rename(out_temp_file, output + ".geotiff");
   } else {
-    console.log("Saving grib");
     return await rename(out_temp_file, output + ".grib");
   }
 }

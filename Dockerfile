@@ -40,4 +40,4 @@ RUN npm install
 
 COPY --chown=$USER:$USER . /home/node/app/
 
-USER $USER
+#USER $USER
