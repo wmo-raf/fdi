@@ -6,6 +6,6 @@ services:
     container_name: fdi
     build: .
     restart: "no"
-    command: watch "date >> /var/log/date.log"
+    command: tail -f /dev/null
     volumes:
       - ${DATA_VOLUME}:/data
