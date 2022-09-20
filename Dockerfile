@@ -4,7 +4,7 @@ USER root
 
 ENV DEBIAN_FRONTEND=noninteractive 
 
-RUN apt-get update && apt-get install -y wget g++ make cdo \
+RUN apt-get update && apt-get install -y wget g++ gfortran make cdo \
     && rm -rf /var/lib/apt/lists/*
 
 COPY ./build_wgrib.sh /
