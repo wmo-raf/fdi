@@ -143,6 +143,8 @@ async function grib_to_tiff(input) {
     "COMPRESS=LERC_DEFLATE",
     "-co",
     "MAX_Z_ERROR=0.01",
+    "-ot",
+    "Float32",
     input,
     out_file,
   ];
@@ -184,7 +186,7 @@ async function grib2_to_file(input, output, options) {
   }
 
   if (options.asGeoTiff) {
-    return await rename(out_temp_file, output + ".geotiff");
+    return await rename(out_temp_file, output + ".tif");
   } else {
     return await rename(out_temp_file, output + ".grib");
   }
