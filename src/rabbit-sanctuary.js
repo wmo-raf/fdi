@@ -1,10 +1,11 @@
-import { absolute_path } from './utility.js';
-import { basename } from 'path';
-import { setTimeout as sleep } from 'timers/promises';
-import { Worker } from 'worker_threads'
+import { absolute_path } from "./utility.js";
+import { basename } from "path";
+import { setTimeout as sleep } from "timers/promises";
+import { Worker } from "worker_threads";
+import "dotenv/config";
 
-const MINUTES_BEFORE_RETRY = 5;
-const MINUTES_BEFORE_TIMEOUT = 5;
+const MINUTES_BEFORE_RETRY = Number(process.env.MINUTES_BEFORE_RETRY) || 5;
+const MINUTES_BEFORE_TIMEOUT = Number(process.env.MINUTES_BEFORE_TIMEOUT) || 5;
 
 export class RabbitSanctuary {
   #all = new Set();
@@ -16,7 +17,6 @@ export class RabbitSanctuary {
     for (let rabbit of rabbits) {
       if (this.#all.has(rabbit)) {
         this.#doomed.delete(rabbit);
-
       } else {
         this.#all.add(rabbit);
         this.#queued.push(rabbit);
@@ -38,7 +38,6 @@ export class RabbitSanctuary {
       if (this.#doomed.has(rabbit)) {
         this.#all.delete(rabbit);
         this.#doomed.delete(rabbit);
-
       } else {
         this.#run(rabbit);
       }
@@ -50,19 +49,16 @@ export class RabbitSanctuary {
     this.#running.add(rabbit);
 
     try {
-      log(rabbit, 'Trying...');
+      log(rabbit, "Trying...");
       await do_rabbit_things(rabbit, MINUTES_BEFORE_TIMEOUT);
 
-      log(rabbit, 'Success!');
-
-    } catch(error) {
+      log(rabbit, "Success!");
+    } catch (error) {
       need_sleep = true;
 
-      let err_string = error?.stack
-        ?? error?.toString()
-        ?? 'Unknown error';
+      let err_string = error?.stack ?? error?.toString() ?? "Unknown error";
 
-      for (let line of err_string.split('\n')) log(rabbit, line);
+      for (let line of err_string.split("\n")) log(rabbit, line);
       log(rabbit, `Retrying in ${MINUTES_BEFORE_RETRY} minutes...`);
     }
 
@@ -78,11 +74,14 @@ export class RabbitSanctuary {
 
 async function do_rabbit_things(module, time) {
   await new Promise((resolve, reject) => {
-    let worker = new Worker(absolute_path('./rabbit.js'), { argv: [module] });
+    let worker = new Worker(absolute_path("./rabbit.js"), { argv: [module] });
     let timeout = reset_timeout(worker, time);
-    worker.on('message', () => timeout = reset_timeout(worker, time, timeout));
-    worker.on('error', reject);
-    worker.on('exit', exitCode => {
+    worker.on(
+      "message",
+      () => (timeout = reset_timeout(worker, time, timeout))
+    );
+    worker.on("error", reject);
+    worker.on("exit", (exitCode) => {
       if (exitCode === 0) {
         clearTimeout(timeout);
         resolve();
@@ -94,7 +93,7 @@ async function do_rabbit_things(module, time) {
 }
 
 function log(module, str) {
-  console.log(`${basename(module, '.js')}: ${str}`);
+  console.log(`${basename(module, ".js")}: ${str}`);
 }
 
 function reset_timeout(worker, time, previous_timeout) {
