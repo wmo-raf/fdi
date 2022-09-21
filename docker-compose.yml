@@ -10,8 +10,8 @@ services:
     env_file:
       - .env
     volumes:
-      - ${DATA_VOLUME}:/app/public
-      - ${DATA_STATE_VOLUME}:/app/src/state
+      - ${DATA_VOLUME}:/home/node/app/public
+      - ${DATA_STATE_VOLUME}:/home/node/app/src/state
   fdi_web_proxy:
       image: nginx:1.23.1-alpine
       container_name: fdi_web_proxy
