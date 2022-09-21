@@ -7,6 +7,8 @@ services:
     build: .
     restart: ${RESTART_POLICY}
     command: npm start
+    env_file:
+      - .env
     volumes:
       - ${DATA_VOLUME}:/app/public
       - ${DATA_STATE_VOLUME}:/app/src/state
