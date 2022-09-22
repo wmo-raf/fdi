@@ -4,7 +4,7 @@ from pathlib import Path
 import glob
 import re
 
-DATA_PATH = os.getenv('DATA_VOLUME') or "./public"
+DATA_PATH = os.getenv('DATA_VOLUME')
 
 def clean_up():
     if DATA_PATH and os.path.isdir(DATA_PATH):
