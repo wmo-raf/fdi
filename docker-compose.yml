@@ -6,7 +6,6 @@ services:
     container_name: fdi
     build: .
     restart: ${RESTART_POLICY}
-    command: npm start
     env_file:
       - .env
     volumes:

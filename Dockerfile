@@ -4,8 +4,7 @@ USER root
 
 ENV DEBIAN_FRONTEND=noninteractive 
 
-RUN apt-get update && apt-get install -y wget g++ gfortran make cdo \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y wget g++ gfortran make cdo cron
 
 COPY ./build_wgrib.sh /
 RUN /build_wgrib.sh
@@ -29,15 +28,33 @@ ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 # https://askubuntu.com/questions/504546/error-message-source-not-found-when-running-a-script
 RUN strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
 
+
+# cron job
+COPY ./cleanup_old_forecasts.py /
+COPY ./cleanup.cron /
+
+# Give execution rights
+RUN chmod 0644 /cleanup_old_forecasts.py
+RUN chmod 0644 /cleanup.cron
+# Apply cron job
+RUN crontab /cleanup.cron
+# Create the log file
+RUN touch /cron.log
+
 ENV USER node
 
 RUN addgroup $USER && useradd -ms /bin/bash $USER -g $USER
 WORKDIR /home/node/app
 
+COPY ./entrypoint.sh /home/node/app/entrypoint.sh
 COPY package.json /home/node/package.json
 COPY package-lock.json /home/node/package-lock.json
 RUN npm install
 
 COPY --chown=$USER:$USER . /home/node/app/
+
+CMD cron
+
+ENTRYPOINT ["./entrypoint.sh"]
 
 #USER $USER
