@@ -198,11 +198,14 @@ async function grib1_to_file(input, output, options = {}) {
   const { record_number, clip_by, asGeoTiff, factor } = options;
 
   // create grib file for variable
-  const wgrib_cmd = `wgrib ${input} | head -n ${
-    record_number || 1
-  } | wgrib -i ${input} -grib -o ${out_temp_file}`;
-  const args = ["-c", wgrib_cmd];
-  await spawn_cmd("sh", args);
+  await spawn_cmd("wgrib", [
+    input,
+    "-d",
+    record_number,
+    "-grib",
+    "-o",
+    out_temp_file,
+  ]);
 
   if (clip_by) {
     const out = await clip_grib(out_temp_file, clip_by);
