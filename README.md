@@ -6,9 +6,9 @@ Currently dowloads hourly forecast datasets from NOAA GFS
 ### Usage with Native Node JS
 
 ```
-yarn install
+npm install
 
-yarn start
+npm run start
 ```
 
 ## Usage with Docker
