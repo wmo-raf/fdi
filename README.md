@@ -8,7 +8,7 @@ Currently dowloads hourly forecast datasets from NOAA GFS
 ```
 yarn install
 
-yarn run tera
+yarn start
 ```
 
 ## Usage with Docker
