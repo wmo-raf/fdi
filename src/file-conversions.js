@@ -140,9 +140,9 @@ async function grib_to_tiff(input) {
 
   const gdalwarp_translate_args = [
     "-co",
-    "COMPRESS=LERC_DEFLATE",
+    "COMPRESS=LZW",
     "-co",
-    "MAX_Z_ERROR=0.01",
+    "predictor=3",
     "-ot",
     "Float32",
     input,
@@ -168,7 +168,7 @@ async function grib2_to_file(input, output, options) {
   ]);
 
   if (options.clip_by) {
-    const out = await clip_grib(out_temp_file, output.options.clip_by);
+    const out = await clip_grib(out_temp_file, options.clip_by);
     await rm(out_temp_file); // clean up
     out_temp_file = out;
   }
