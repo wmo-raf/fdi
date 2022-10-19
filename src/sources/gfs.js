@@ -4,6 +4,8 @@ import { grib2, gfs_combine_grib } from "../file-conversions.js";
 import { typical_metadata, output_path, run_all } from "../utility.js";
 import { readFile, rm } from "fs/promises";
 
+const SHP_CLIP_PATH = process.env.SHP_CLIP_PATH;
+
 export const shared_metadata = {
   width: 1440,
   height: 721,
@@ -78,12 +80,13 @@ export async function convert_simple(url, datasets, dt, compression_level) {
       let output = output_path(
         dataset.output_dir,
         dt.to_iso_string(),
-        dataset.filename
+        dataset.layer_name
       );
       await (dataset.convert ?? grib2)(input, output, {
         compression_level,
         ...dataset.grib2_options,
         asGeoTiff: true,
+        clip_by: SHP_CLIP_PATH,
       });
     })
   );
@@ -110,13 +113,14 @@ async function convert_accum(urls, datasets, dt, offset, compression_level) {
         let output = output_path(
           dataset.output_dir,
           dt.to_iso_string(),
-          dataset.filename
+          dataset.layer_name
         );
 
         await grib2(input, output, {
           limit: simple ? 1 : 2,
           ...dataset.grib2_options,
           asGeoTiff: true,
+          clip_by: SHP_CLIP_PATH,
         });
       })
     );
