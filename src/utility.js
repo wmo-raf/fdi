@@ -20,6 +20,8 @@ import { brotliCompress as _brotliCompress, constants } from "zlib";
 import "dotenv/config";
 import util from "util";
 import mv from "mv";
+import crypto from "crypto";
+import axios from "axios";
 
 const rename = util.promisify(mv);
 
@@ -141,4 +143,25 @@ export function typical_metadata(dataset, dt, shared_metadata) {
   let metadata = dataset.metadata ?? {};
   let new_state = { start, end, missing };
   return { start, end, missing, ...metadata, ...shared_metadata, new_state };
+}
+
+function get_signature(body, secret) {
+  const hmac = crypto.createHmac("sha256", secret);
+  hmac.update(JSON.stringify(body));
+  const hash = hmac.digest("hex");
+  return hash;
+}
+
+export function send_ingest_command(endpoint, secret) {
+  const payload = {
+    timestamp: new Date().getTime(),
+  };
+
+  const signature = get_signature(payload, secret);
+
+  return axios.post(endpoint, payload, {
+    headers: {
+      "X-Gsky-Signature": signature,
+    },
+  });
 }

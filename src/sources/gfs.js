@@ -1,10 +1,19 @@
 import { Datetime } from "../datetime.js";
 import { destructive_cat, download } from "../download.js";
 import { grib2, gfs_combine_grib } from "../file-conversions.js";
-import { typical_metadata, output_path, run_all } from "../utility.js";
+import {
+  typical_metadata,
+  output_path,
+  run_all,
+  send_ingest_command,
+} from "../utility.js";
 import { readFile, rm } from "fs/promises";
 
 const SHP_CLIP_PATH = process.env.SHP_CLIP_PATH;
+
+const GSKY_GFS_INGEST_WEBHOOK_ENDPOINT =
+  process.env.GSKY_GFS_INGEST_WEBHOOK_ENDPOINT;
+const GSKY_WEHBOOK_SECRET = process.env.GSKY_WEHBOOK_SECRET;
 
 export const shared_metadata = {
   width: 1440,
@@ -33,6 +42,14 @@ export async function forage(current_state, datasets) {
     let urls = [url, gfs_url(current_state)];
     let accum_datasets = datasets.filter((d) => d.accumulation);
     await convert_accum(urls, accum_datasets, dt, offset, compression_level);
+  }
+
+  // send gsky ingest command on successfull download
+  if (GSKY_GFS_INGEST_WEBHOOK_ENDPOINT && GSKY_WEHBOOK_SECRET) {
+    await send_ingest_command(
+      GSKY_GFS_INGEST_WEBHOOK_ENDPOINT,
+      GSKY_WEHBOOK_SECRET
+    );
   }
 
   return { metadatas, new_state: { forecast, offset, system } };
