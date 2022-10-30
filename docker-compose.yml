@@ -11,8 +11,6 @@ services:
     volumes:
       - ${DATA_VOLUME}:/home/node/app/public/fdi
       - ${DATA_STATE_VOLUME}:/home/node/app/src/state
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
   fdi_web_proxy:
       image: nginx:1.23.1-alpine
       container_name: fdi_web_proxy
@@ -23,3 +21,7 @@ services:
       ports:
         - ${NGINX_PUBLIC_PORT}:80
 
+networks:
+    default:
+        external:
+            name: ${GSKY_NETWORK}
