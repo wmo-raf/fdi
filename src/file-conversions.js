@@ -51,8 +51,49 @@ export async function grib2(input, output, options = { match: ".*" }) {
   // await write_array_to_file(output, array, options.compression_level);
 }
 
+export async function grib2_speed(input, output, options = {}) {
+  let out_file = join(temp_cache_dir, uuidv4());
+
+  await grib2_to_file(input, out_file, {
+    ...options,
+    asGeoTiff: false,
+    addExt: false,
+  });
+
+  const u_file = join(temp_cache_dir, uuidv4());
+
+  await grib2_to_file(out_file, u_file, {
+    match: options.uMatch,
+    limit: 1,
+    asGeoTiff: false,
+    addExt: false,
+  });
+
+  const v_file = join(temp_cache_dir, uuidv4());
+
+  await grib2_to_file(out_file, v_file, {
+    match: options.vMatch,
+    limit: 1,
+    asGeoTiff: false,
+    addExt: false,
+  });
+
+  const speed_file = await gfs_combine_grib(
+    [u_file, v_file],
+    options,
+    "magnitude"
+  );
+
+  await grib2_to_file(speed_file, output, {
+    ...options,
+    extractGrib: false,
+    clipBy: null,
+    factor: null,
+  });
+}
+
 export async function grib2_acc(input, options = {}) {
-  await gfs_combine_grib(input, options, (a, b) => a - b);
+  await gfs_combine_grib(input, options, "subtract");
 }
 
 export async function netcdf(input, output, options = {}) {
@@ -73,34 +114,30 @@ export async function netcdf_speed(input, output, options = {}) {
   await write_array_to_file(output, array, options.compression_level);
 }
 
-export async function gfs_combine_grib(files, options = {}) {
+export async function gfs_combine_grib(files, options = {}, combine_operation) {
   let out_file = join(temp_cache_dir, uuidv4());
 
-  const cdo_sub_args = ["sub", files[0], files[1], out_file];
+  let args = [];
 
-  await spawn_cmd("cdo", cdo_sub_args);
-
-  if (options.factor) {
-    let out = await cdo_multc(out_file, options.factor);
-    await rm(out_file);
-    out_file = out;
+  if (combine_operation === "subtract") {
+    args = ["sub", files[0], files[1], out_file];
+  } else if (combine_operation === "magnitude") {
+    args = ["sqrt", "-add", "-sqr", files[0], "-sqr", files[1], out_file];
+  } else {
+    throw "Unsupported operation";
   }
 
-  return out_file;
-}
+  if (!!args.length) {
+    await spawn_cmd("cdo", args);
 
-async function gfs_combine_grib_(input, output, options, combine_fn) {
-  let arr = await grib2_to_arr(input, options.match, options.limit);
+    if (options.factor) {
+      let out = await cdo_multc(out_file, options.factor);
+      await rm(out_file);
+      out_file = out;
+    }
 
-  let array = Array.from({ length: arr.length / 2 }, (_, i) => {
-    let a = arr[i];
-    let b = arr[i + arr.length / 2];
-    a = is_magic_nan(a) ? NaN : a;
-    b = is_magic_nan(b) ? NaN : b;
-    return nan_for_glsl(isNaN, combine_fn(a, b), options.factor);
-  });
-
-  await write_array_to_file(output, array, options.compression_level);
+    return out_file;
+  }
 }
 
 async function clip_grib(input, geom) {
@@ -138,7 +175,7 @@ async function cdo_multc(input, constant) {
 async function grib_to_tiff(input) {
   let out_file = join(temp_cache_dir, uuidv4()) + ".tif";
 
-  const gdalwarp_translate_args = [
+  const gdal_translate_args = [
     "-co",
     "COMPRESS=LZW",
     "-co",
@@ -149,26 +186,31 @@ async function grib_to_tiff(input) {
     out_file,
   ];
 
-  await spawn_cmd("gdal_translate", gdalwarp_translate_args);
+  await spawn_cmd("gdal_translate", gdal_translate_args);
 
   return out_file;
 }
 
 async function grib2_to_file(input, output, options) {
-  let out_temp_file = join(temp_cache_dir, uuidv4());
+  let out_temp_file;
 
-  await spawn_cmd("wgrib2", [
-    input,
-    "-match",
-    options.match,
-    "-limit",
-    options.limit,
-    "-grib",
-    out_temp_file,
-  ]);
+  if (options.extractGrib !== undefined && options.extractGrib === false) {
+    out_temp_file = input;
+  } else {
+    out_temp_file = join(temp_cache_dir, uuidv4());
+    await spawn_cmd("wgrib2", [
+      input,
+      "-match",
+      options.match,
+      "-limit",
+      options.limit,
+      "-grib",
+      out_temp_file,
+    ]);
+  }
 
-  if (options.clip_by) {
-    const out = await clip_grib(out_temp_file, options.clip_by);
+  if (options.clipBy) {
+    const out = await clip_grib(out_temp_file, options.clipBy);
     await rm(out_temp_file); // clean up
     out_temp_file = out;
   }
@@ -181,6 +223,7 @@ async function grib2_to_file(input, output, options) {
 
   if (options.asGeoTiff) {
     const out = await grib_to_tiff(out_temp_file);
+
     await rm(out_temp_file);
     out_temp_file = out;
   }
@@ -188,14 +231,18 @@ async function grib2_to_file(input, output, options) {
   if (options.asGeoTiff) {
     return await rename(out_temp_file, output + ".tif");
   } else {
-    return await rename(out_temp_file, output + ".grib");
+    if (options.addExt === false) {
+      return await rename(out_temp_file, output);
+    } else {
+      return await rename(out_temp_file, output + ".grib");
+    }
   }
 }
 
 async function grib1_to_file(input, output, options = {}) {
   let out_temp_file = join(temp_cache_dir, uuidv4());
 
-  const { record_number, clip_by, asGeoTiff, factor } = options;
+  const { record_number, clipBy, asGeoTiff, factor } = options;
 
   // create grib file for variable
   await spawn_cmd("wgrib", [
@@ -207,8 +254,8 @@ async function grib1_to_file(input, output, options = {}) {
     out_temp_file,
   ]);
 
-  if (clip_by) {
-    const out = await clip_grib(out_temp_file, clip_by);
+  if (clipBy) {
+    const out = await clip_grib(out_temp_file, clipBy);
     await rm(out_temp_file); // clean up
     out_temp_file = out;
   }
@@ -254,26 +301,6 @@ async function f64_to_arr(input) {
 }
 
 const devnull = platform() === "win32" ? "NUL" : "/dev/null";
-
-async function grib2_to_arr(input, match = ".*", limit = 1) {
-  let buffer = await spawn_cmd("wgrib2", [
-    input,
-    "-match",
-    match,
-    "-limit",
-    limit,
-    "-inv",
-    devnull,
-    "-bin",
-    "-",
-    "-no_header",
-    "-order",
-    "we:sn",
-    "-ncpu",
-    "1",
-  ]);
-  return typedarray_from_buffer(buffer, Float32Array);
-}
 
 async function netcdf_to_arr(input, variables, flatten = true) {
   let buffer = await spawn_cmd("ncdump", [

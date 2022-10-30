@@ -100,12 +100,16 @@ export async function convert_simple(url, datasets, dt, compression_level) {
         dt.to_iso_string(),
         dataset.layer_name
       );
-      await (dataset.convert ?? grib2)(input, output, {
-        compression_level,
-        ...dataset.grib2_options,
-        asGeoTiff: true,
-        clip_by: SHP_CLIP_PATH,
-      });
+
+      if (dataset.convert) {
+        console.log("OUT", output);
+        await (dataset.convert ?? grib2)(input, output, {
+          compression_level,
+          ...dataset.grib2_options,
+          asGeoTiff: true,
+          clipBy: SHP_CLIP_PATH,
+        });
+      }
     })
   );
   await rm(input);
@@ -138,7 +142,7 @@ async function convert_accum(urls, datasets, dt, offset, compression_level) {
           limit: simple ? 1 : 2,
           ...dataset.grib2_options,
           asGeoTiff: true,
-          clip_by: SHP_CLIP_PATH,
+          clipBy: SHP_CLIP_PATH,
         });
       })
     );
