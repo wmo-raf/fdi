@@ -46,7 +46,7 @@ export async function forage(current_state, datasets) {
 
   // send gsky ingest command on successfull download
   if (GSKY_GFS_INGEST_WEBHOOK_ENDPOINT && GSKY_WEHBOOK_SECRET) {
-    console.log(`Sending Ingest Command for time ${dt}`);
+    console.log(`Sending Ingest Command for time ${dt.to_iso_string()}`);
     await send_ingest_command(
       GSKY_GFS_INGEST_WEBHOOK_ENDPOINT,
       GSKY_WEHBOOK_SECRET
