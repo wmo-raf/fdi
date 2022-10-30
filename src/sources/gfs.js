@@ -101,15 +101,12 @@ export async function convert_simple(url, datasets, dt, compression_level) {
         dataset.layer_name
       );
 
-      if (dataset.convert) {
-        console.log("OUT", output);
-        await (dataset.convert ?? grib2)(input, output, {
-          compression_level,
-          ...dataset.grib2_options,
-          asGeoTiff: true,
-          clipBy: SHP_CLIP_PATH,
-        });
-      }
+      await (dataset.convert ?? grib2)(input, output, {
+        compression_level,
+        ...dataset.grib2_options,
+        asGeoTiff: true,
+        clipBy: SHP_CLIP_PATH,
+      });
     })
   );
   await rm(input);

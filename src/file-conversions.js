@@ -119,7 +119,7 @@ export async function gfs_combine_grib(files, options = {}, combine_operation) {
 
   let args = [];
 
-  if (combine_operation === "subtract") {
+  if (!combine_operation || combine_operation === "subtract") {
     args = ["sub", files[0], files[1], out_file];
   } else if (combine_operation === "magnitude") {
     args = ["sqrt", "-add", "-sqr", files[0], "-sqr", files[1], out_file];
