@@ -6,6 +6,7 @@ services:
     container_name: fdi
     build: .
     restart: ${RESTART_POLICY}
+    network_mode: "host"
     env_file:
       - .env
     volumes:
