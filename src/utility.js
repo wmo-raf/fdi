@@ -159,9 +159,13 @@ export function send_ingest_command(endpoint, secret) {
 
   const signature = get_signature(payload, secret);
 
-  return axios.post(endpoint, payload, {
-    headers: {
-      "X-Gsky-Signature": signature,
-    },
-  });
+  return axios
+    .post(endpoint, payload, {
+      headers: {
+        "X-Gsky-Signature": signature,
+      },
+    })
+    .catch((err) => {
+      console.log("Error sending GSKY INGEST COMMAND", err);
+    });
 }
