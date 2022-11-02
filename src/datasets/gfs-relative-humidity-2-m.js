@@ -1,12 +1,9 @@
 export const name = `relative humidity at 2 m above ground`;
 
 export const metadata = {
-  unit: '%',
-  originalUnit: '%',
-  domain: [0, 100],
-  colormap: 'CREST',
+  unit: "%",
 };
 
 export const grib2_options = {
-  match: ':RH:2 m above ground',
+  match: ":RH:2 m above ground",
 };

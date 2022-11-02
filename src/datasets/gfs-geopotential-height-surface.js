@@ -1,13 +1,10 @@
 export const name = `geopotential height at surface`;
 
 export const metadata = {
-  unit: 'km',
-  originalUnit: 'km',
-  domain: [0, 32],
-  colormap: 'TURBO',
+  unit: "km",
 };
 
 export const grib2_options = {
-  match: ':HGT:surface',
+  match: ":HGT:surface",
   factor: 1e-3,
 };

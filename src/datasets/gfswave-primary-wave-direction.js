@@ -1,12 +1,9 @@
-export const name = 'primary wave direction (from)';
+export const name = "primary wave direction (from)";
 
 export const metadata = {
-  unit: 'deg',
-  originalUnit: 'deg',
-  domain: [0, 360],
-  colormap: 'RAINBOW',
+  unit: "deg",
 };
 
 export const grib2_options = {
-  match: ':DIRPW:surface',
+  match: ":DIRPW:surface",
 };

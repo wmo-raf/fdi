@@ -1,18 +1,15 @@
-export const name = 'precipitation in previous hour';
+export const name = "precipitation in previous hour";
 
 export const metadata = {
-  unit: 'mm',
-  originalUnit: 'mm',
-  domain: [0, 50],
-  colormap: 'TURBO',
+  unit: "mm",
 };
 
 export const grib2_options = {
-  match: ':APCP:surface:0-',
+  match: ":APCP:surface:0-",
 };
 
 export const accumulation = {
   reset: Infinity,
 };
 
-export const variable = 'gfs_precipitation_1hr';
+export const variable = "gfs_precipitation_1hr";
