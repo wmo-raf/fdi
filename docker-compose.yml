@@ -23,5 +23,5 @@ services:
 
 networks:
     default:
-        external:
-            name: ${AHW_DOCKER_NETWORK}
+      name:  ${AHW_DOCKER_NETWORK}
+      external: true
