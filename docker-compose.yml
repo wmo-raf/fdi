@@ -24,4 +24,4 @@ services:
 networks:
     default:
         external:
-            name: ${GSKY_NETWORK}
+            name: ${AHW_DOCKER_NETWORK}
