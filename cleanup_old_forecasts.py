@@ -4,7 +4,7 @@ from pathlib import Path
 import glob
 import re
 
-DATA_PATH = os.getenv('CONTAINER_DATA_PATH')
+DATA_PATH = os.getenv('DATA_PATH')
 
 def clean_up():
     if DATA_PATH and os.path.isdir(DATA_PATH):
