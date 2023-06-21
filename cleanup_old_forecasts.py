@@ -8,6 +8,7 @@ DATA_PATH = os.getenv('DATA_PATH')
 
 def clean_up():
     if DATA_PATH and os.path.isdir(DATA_PATH):
+        print(f"CLEANING UP DATA IN {DATA_PATH}")
         data_dir = os.path.abspath(DATA_PATH)
         pattern = f"{data_dir}/**/*.tif"
         current_date = datetime.utcnow().date()
@@ -23,6 +24,9 @@ def clean_up():
                         print(f"Deleted {f}")
             except Exception as e:
                 print(e)
+    else:
+        print("DATA_PATH ENV NOT FOUND")
 
 if __name__ == "__main__":
+   print(f"STARTING CLEAN UP")
    clean_up()

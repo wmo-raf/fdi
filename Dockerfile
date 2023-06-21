@@ -41,13 +41,13 @@ ENV USER node
 RUN addgroup $USER && useradd -ms /bin/bash $USER -g $USER
 WORKDIR /home/node/app
 
-COPY ./entrypoint.sh /home/node/app/entrypoint.sh
 COPY package.json /home/node/package.json
 COPY package-lock.json /home/node/package-lock.json
 RUN npm install
 
 COPY --chown=$USER:$USER . /home/node/app/
 
+COPY ./entrypoint.sh /home/node/app/entrypoint.sh
 ENTRYPOINT ["./entrypoint.sh"]
 
 #USER $USER
