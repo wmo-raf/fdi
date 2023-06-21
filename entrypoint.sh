@@ -6,3 +6,5 @@ printenv | grep -v "no_proxy" >>/etc/environment
 # ensure cron is running
 service cron start
 service cron status
+
+npm start
