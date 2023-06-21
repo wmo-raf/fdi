@@ -177,6 +177,8 @@ async function grib_to_tiff(input) {
 
   const gdal_translate_args = [
     "-co",
+    "TILED=YES",
+    "-co",
     "COMPRESS=LZW",
     "-co",
     "predictor=3",
