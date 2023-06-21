@@ -31,15 +31,10 @@ RUN strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so
 
 # cron job
 COPY ./cleanup_old_forecasts.py /
-COPY ./cleanup.cron /
-
-# Give execution rights
 RUN chmod 0644 /cleanup_old_forecasts.py
-RUN chmod 0644 /cleanup.cron
-# Apply cron job
-RUN crontab /cleanup.cron
-# Create the log file
-RUN touch /cron.log
+
+COPY ./cleanup.cron /etc/cron.d/cleanup.cron
+RUN chmod 0644 /etc/cron.d/cleanup.cron && crontab /etc/cron.d/cleanup.cron
 
 ENV USER node
 
@@ -52,8 +47,6 @@ COPY package-lock.json /home/node/package-lock.json
 RUN npm install
 
 COPY --chown=$USER:$USER . /home/node/app/
-
-CMD cron
 
 ENTRYPOINT ["./entrypoint.sh"]
 
