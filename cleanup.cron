@@ -1,1 +1,1 @@
-2 * * * * /usr/bin/python3 /cleanup_old_forecasts.py > /proc/1/fd/1 2>/proc/1/fd/2
+0 0 * * * /usr/bin/python3 /cleanup_old_forecasts.py > /proc/1/fd/1 2>/proc/1/fd/2

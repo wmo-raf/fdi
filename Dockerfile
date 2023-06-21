@@ -28,7 +28,6 @@ ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 # https://askubuntu.com/questions/504546/error-message-source-not-found-when-running-a-script
 RUN strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
 
-
 # cron job
 COPY ./cleanup_old_forecasts.py /
 RUN chmod 0644 /cleanup_old_forecasts.py
